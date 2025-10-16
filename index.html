@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Data URI Image Viewer - Single File App</title>
+  <meta name="description" content="A self-contained single-file HTML app that displays images embedded as base64 data URIs. Includes download and copy-to-clipboard features, plus a light/dark theme toggle." />
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --text: #1f2937;
+      --muted: #64748b;
+      --accent: #4f46e5;
+      --shadow: 0 6px 20px rgba(0,0,0,.08);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0b1020;
+      --surface: #111827;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --accent: #8b5cf6;
+      --shadow: 0 8px 24px rgba(0,0,0,.6);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto;
+      background: radial-gradient( circle at 20% -10%, rgba(99,102,241,.15), transparent 40% ),
+                  radial-gradient( circle at 80% 0%, rgba(59,130,246,.12), transparent 40% ),
+                  var(--bg);
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    /* Layout */
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(99,102,241,.12), rgba(56,189,248,.08) 60%), var(--surface);
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(99,102,241,.15);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand h1 {
+      font-size: 1.25rem;
+      margin: 0;
+    }
+
+    .brand p {
+      margin: 0;
+      font-size: .9rem;
+      color: var(--muted);
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(99,102,241,.25);
+      background: color-mix(in oklab, var(--surface) 90%, white);
+    }
+
+    /* Switch styling */
+    .switch {
+      position: relative;
+      width: 52px;
+      height: 28px;
+    }
+    .switch input { display: none; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0;
+      right: 0; bottom: 0;
+      background-color: #c7d2fe;
+      border-radius: 34px;
+      transition: .2s;
+    }
+    .slider:before {
+      content: "";
+      position: absolute;
+      height: 22px; width: 22px;
+      left: 3px; bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    }
+    input:checked + .slider {
+      background-color: var(--accent);
+    }
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+
+    h2.section {
+      margin: 22px 0 8px;
+      font-size: 1.05rem;
+    }
+
+    /* Gallery/grid for images */
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      padding: 6px 2px 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      border: 1px solid rgba(0,0,0,.05);
+    }
+    .card img {
+      width: 100%;
+      height: auto;
+      max-height: 320px;
+      object-fit: contain;
+      background: #f6f6f6;
+      border-radius: 8px;
+    }
+    .caption {
+      font-size: 0.92rem;
+      color: var(--muted);
+      margin: 8px 0 6px;
+      text-align: center;
+    }
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      width: 100%;
+      padding-bottom: 6px;
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      color: #fff;
+      background: var(--accent);
+      transition: transform .1s ease, background .2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn.secondary {
+      background: #64748b;
+    }
+
+    /* Toast / small notifications */
+    .toast {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 24px;
+      background: rgba(20, 20, 20, 0.9);
+      color: white;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 99;
+    }
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-2px);
+      pointer-events: auto;
+    }
+
+    /* Screen-reader only helper */
+    .sr-only {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+
+    @media (max-width: 640px) {
+      header { flex-direction: column; align-items: flex-start; }
+      .theme-toggle { width: 100%; justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header aria-label="Header with app title and theme toggle">
+      <div class="brand">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-label="Logo" role="img" style="flex:0 0 auto;">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"></circle>
+        </svg>
+        <div>
+          <h1>Data URI Image Viewer</h1>
+          <p>Self-contained single-file app that renders images embedded as base64 data URIs.</p>
+        </div>
+      </div>
+
+      <div class="theme-toggle" aria-label="Theme toggle">
+        <span class="sr-only">Toggle dark theme</span>
+        <label class="switch" for="themeToggle" aria-label="Dark mode switch">
+          <input type="checkbox" id="themeToggle" aria-label="Toggle dark theme" />
+          <span class="slider" aria-hidden="true"></span>
+        </label>
+        <span style="font-size:. nine; color:var(--muted);"></span>
+      </div>
+    </header>
+
+    <h2 class="section" id="intro" style="margin-top:18px;">Preview</h2>
+
+    <section class="gallery" aria-label="Image gallery showing base64 data URI images">
+      <!-- First image: sample.png (base64 PNG) -->
+      <div class="card" data-uri="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="Sample PNG loaded from base64 data URI" />
+        <div class="caption">sample.png (1x1 PNG, embedded as data URI)</div>
+        <div class="toolbar">
+          <button class="btn copy" data-uri="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" aria-label="Copy data URI for sample.png">Copy URI</button>
+          <a class="btn" download="sample.png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" aria-label="Download sample.png">Download</a>
+        </div>
+      </div>
+
+      <!-- Second image: logo.svg (embedded as data URI) -->
+      <div class="card" data-uri="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0iYmx1ZSIvPjwvc3ZnPg==">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0iYmx1ZSIvPjwvc3ZnPg==" alt="Logo SVG loaded from base64 data URI showing a blue circle" />
+        <div class="caption">logo.svg (blue circle, embedded as data URI)</div>
+        <div class="toolbar">
+          <button class="btn copy" data-uri="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0iYmx1ZSIvPjwvc3ZnPg==" aria-label="Copy data URI for logo.svg">Copy URI</button>
+          <a class="btn" download="logo.svg" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0iYmx1ZSIvPjwvc3ZnPg==" aria-label="Download logo.svg">Download</a>
+        </div>
+      </div>
+    </section>
+
+    <p style="font-size:.85rem; color:var(--muted); text-align:center; margin:8px 0 20px;">
+      Tip: Use the Copy URI button to copy the embedded data URI to your clipboard.
+    </p>
+  </div>
+
+  <!-- Simple toast notification -->
+  <div id="toast" class="toast" role="status" aria-live="polite" style="display:none;"></div>
+
+  <script>
+    // Data URIs used by the gallery (two attachments provided)
+    const samplePng = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    const logoSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0MCIgZmlsbD0iYmx1ZSIvPjwvc3ZnPg==";
+
+    // Theme persistence and toggle
+    (function initializeTheme() {
+      const toggle = document.getElementById('themeToggle');
+      const saved = localStorage.getItem('theme');
+      const applyDark = () => {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        toggle.checked = true;
+      };
+      const applyLight = () => {
+        document.documentElement.removeAttribute('data-theme');
+        toggle.checked = false;
+      };
+
+      if (saved === 'dark') {
+        applyDark();
+      } else {
+        // respect OS preference if no explicit setting
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          applyDark();
+        } else {
+          applyLight();
+        }
+      }
+
+      toggle.addEventListener('change', () => {
+        if (toggle.checked) {
+          applyDark();
+          localStorage.setItem('theme', 'dark');
+        } else {
+          applyLight();
+          localStorage.setItem('theme', 'light');
+        }
+      });
+    })();
+
+    // Toast utility
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.style.display = 'block';
+      requestAnimationFrame(() => {
+        toast.classList.add('visible');
+      });
+      setTimeout(() => {
+        toast.classList.remove('visible');
+        setTimeout(() => { toast.style.display = 'none'; }, 250);
+      }, 1500);
+    }
+
+    // Copy handler for all copy buttons
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.matches('button.copy')) {
+        const uri = e.target.getAttribute('data-uri');
+        if (uri) {
+          navigator.clipboard?.writeText(uri).then(() => {
+            showToast('Data URI copied to clipboard');
+          }).catch(() => {
+            showToast('Copy failed. Your browser may block clipboard access.');
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html>
