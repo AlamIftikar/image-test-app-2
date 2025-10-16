@@ -1,53 +1,64 @@
-# Data URI Image Viewer (Single-File HTML)
+# Data URI Image Viewer - Round 2
 
-A self-contained, single-file HTML app that displays images embedded as base64 data URIs. The page is fully self-contained (no external dependencies) and ready to deploy. It includes features to download or copy the embedded data URIs and supports a light/dark theme toggle.
+Project title
+- Data URI Image Viewer - Round 2
 
-## Summary
-This app renders images provided as base64 data URIs directly in the browser. It showcases two attachments included with the project:
-- sample.png (a 1x1 PNG, embedded as a data URI)
-- logo.svg (an SVG logo embedded as a data URI)
+Summary
+- A self-contained single-file HTML app that renders images embedded as base64 data URIs. It includes features to copy the embedded data URIs to the clipboard, download the images, and toggle between light and dark themes. In Round 2, a heading above the image gallery was added, images are laid out side-by-side with spacing, and a dark background theme option is emphasized.
 
-Users can view both images, download them, or copy their data URIs to the clipboard. The interface is responsive, accessible, and includes a theme toggle.
+Key features
+- Heading above the gallery: “My Image Gallery”
+- Images laid out side-by-side with consistent spacing (responsive grid)
+- Light/dark theme toggle with persistent preference
+- Copy URI button to copy the embedded data URI to the clipboard
+- Download button for each image
+- Self-contained single-file HTML (no external dependencies)
 
-## Key Features
-- Self-contained single HTML file (index.html) with inline CSS and JavaScript
-- Display of two data URI images (sample.png and logo.svg)
-- Per-image actions: Copy Data URI and Download
-- Light/Dark theme toggle with persistent preference (localStorage)
-- Responsive, accessible UI with clear captions
-- No external dependencies required
+Setup instructions
+1. Create a new file named index.html.
+2. Copy and paste the entire HTML content from the updated code.
+3. Open index.html in a modern web browser.
 
-## Setup Instructions
-1. Save the provided content as index.html.
-2. Open index.html in any modern web browser (Chrome, Firefox, Edge, Safari).
+Usage instructions
+- Use the theme toggle in the header to switch between light and dark themes. The chosen theme is saved to localStorage and will persist on reloads.
+- In the gallery:
+  - Click “Copy URI” to copy the corresponding data URI to the clipboard.
+  - Click “Download” to save the embedded image to your device.
 
-Optional:
-- To customize the data URIs, edit the values in the HTML where the images are defined.
+Technical details
+- HTML/CSS/JS are all contained in a single HTML file.
+- Layout
+  - A responsive grid (.gallery) uses grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); to place images side-by-side with spacing.
+  - Each image is wrapped in a .card with a caption and toolbar containing action buttons.
+- Data URIs
+  - Images are embedded as base64 data URIs (PNG and SVG used in the sample gallery).
+- Theme
+  - CSS variables define light and dark themes.
+  - A toggle control updates a data-theme attribute on the documentElement and stores the preference in localStorage.
+- Interactions
+  - A toast notification shows success/failure messages for clipboard Copy actions.
+  - Copy to clipboard uses the Clipboard API with graceful fallback messaging.
 
-## Usage Instructions
-- The page loads with two embedded images displayed in a responsive grid.
-- For each image:
-  - Copy URI: Copies the base64 data URI to your clipboard.
-  - Download: Downloads the image using the embedded data URI.
-- Use the theme toggle in the header to switch between light and dark modes. The selected theme is saved to localStorage and persists across reloads.
+Changes made in Round 2
+- Added a visible heading above the image gallery: “My Image Gallery” (replacing the previous “Preview” heading).
+- Ensured images are displayed side-by-side with consistent spacing by leveraging a responsive grid layout (repeat(auto-fit, minmax(260px, 1fr)) with a 16px gap).
+- Clarified and stabilized the header by fixing a minor style property issue and reinforcing the dark background support via the existing theme system.
+- Retained all existing features (Copy URI, Download, theme persistence, and toast notifications) with improved layout context for the gallery.
 
-## Technical Details
-- HTML: A single HTML document (index.html) that includes all markup for the header, image gallery, and actions.
-- CSS: Inline CSS within a <style> tag. Implements a responsive grid, card-style containers, and a light/dark theme via data-theme attribute.
-- JavaScript: Inline script handling:
-  - Theme initialization and persistence
-  - Copy-to-clipboard functionality for data URIs
-  - Lightweight toast notifications for user feedback
-- Accessibility: Proper semantic elements (header, sections, figure/figcaption), alt text for images, ARIA attributes for controls, and a visually-hidden label for the theme toggle.
+Deployment info (GitHub Pages)
+- This is a single-file app suitable for hosting on GitHub Pages.
+- Steps:
+  1. Create a repository (e.g., yourname/data-uri-image-viewer).
+  2. Add index.html with the updated contents.
+  3. Commit and push to the main branch (or gh-pages depending on your setup).
+  4. In the repository settings, enable GitHub Pages and select the branch (main) and root directory.
+  5. Access the site at https://<username>.github.io/<repository>/
 
-## Deployment Info (GitHub Pages)
-- Create a new GitHub repository (e.g., data-uri-viewer).
-- Push this single index.html file to the repository (e.g., as main branch).
-- In GitHub, enable GitHub Pages from the repository settings, selecting the main branch / root as the source.
-- Access the site via https://<your-username>.github.io/<repository-name>/index.html
+License
+- MIT License
 
-## License
-MIT
-
-## Generated
-Date: 2025-10-16
+Notes
+- The gallery uses two embedded data URIs in this example:
+  - sample.png (1x1 PNG)
+  - logo.svg (blue circle)
+- You can replace or add more items by duplicating the .card blocks inside the gallery section and updating the data-uri attribute and image src accordingly.
