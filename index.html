@@ -127,6 +127,9 @@
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 16px;
       padding: 6px 2px 20px;
+      /* add a subtle dark backdrop for the gallery area to emphasize contrast in dark mode */
+      background: transparent;
+      border-radius: 12px;
     }
 
     .card {
@@ -233,11 +236,11 @@
           <input type="checkbox" id="themeToggle" aria-label="Toggle dark theme" />
           <span class="slider" aria-hidden="true"></span>
         </label>
-        <span style="font-size:. nine; color:var(--muted);"></span>
+        <span style="font-size:.9rem; color:var(--muted);"></span>
       </div>
     </header>
 
-    <h2 class="section" id="intro" style="margin-top:18px;">Preview</h2>
+    <h2 class="section" id="intro" style="margin-top:18px;">My Image Gallery</h2>
 
     <section class="gallery" aria-label="Image gallery showing base64 data URI images">
       <!-- First image: sample.png (base64 PNG) -->
